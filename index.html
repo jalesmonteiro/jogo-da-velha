@@ -15,8 +15,8 @@
             --bg-secondary: #1e293b;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --color-x: #3b82f6; /* Azul moderno */
-            --color-o: #10b981; /* Verde esmeralda */
+            --color-x: #3b82f6;
+            --color-o: #10b981;
             --color-x-glow: rgba(59, 130, 246, 0.4);
             --color-o-glow: rgba(16, 185, 129, 0.4);
             --accent: #6366f1;
@@ -24,6 +24,7 @@
             --radius-lg: 16px;
             --radius-md: 12px;
             --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+            --grid-size: 3;
         }
 
         * {
@@ -32,6 +33,7 @@
             padding: 0;
             user-select: none;
             -webkit-user-select: none;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
         }
 
         body {
@@ -52,36 +54,64 @@
             max-width: 450px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 16px;
             align-items: center;
         }
 
         /* Cabeçalho e Título */
         header {
             text-align: center;
-            margin-bottom: 10px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .header-title {
+            text-align: left;
         }
 
         header h1 {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             font-weight: 800;
             background: linear-gradient(135deg, var(--color-x), var(--color-o));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             letter-spacing: -1px;
-            margin-bottom: 4px;
         }
 
         header p {
             color: var(--text-muted);
-            font-size: 0.95rem;
+            font-size: 0.85rem;
+        }
+
+        /* Botão do Menu de Configurações */
+        .settings-trigger {
+            background-color: var(--bg-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        .settings-trigger:hover {
+            transform: rotate(45deg);
+            background-color: rgba(255, 255, 255, 0.08);
         }
 
         /* Painel de Configurações / Controles */
         .controls {
             width: 100%;
             background-color: var(--bg-secondary);
-            padding: 16px;
+            padding: 12px;
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow);
             display: flex;
@@ -135,13 +165,17 @@
         .score-box {
             flex: 1;
             background-color: var(--bg-secondary);
-            padding: 12px;
+            padding: 10px;
             border-radius: var(--radius-lg);
             text-align: center;
             box-shadow: var(--shadow);
             border: 1px solid rgba(255, 255, 255, 0.05);
             transition: transform 0.2s;
             position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 0; /* evita overflow de textos grandes */
         }
 
         .score-box.active-turn {
@@ -149,7 +183,6 @@
             border-color: var(--accent);
         }
 
-        /* Indicador de turno */
         .score-box.active-turn::after {
             content: '';
             position: absolute;
@@ -163,16 +196,19 @@
         }
 
         .score-label {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
             color: var(--text-muted);
-            margin-bottom: 4px;
+            margin-bottom: 2px;
             font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .score-value {
-            font-size: 1.6rem;
+            font-size: 1.4rem;
             font-weight: 800;
         }
 
@@ -194,8 +230,8 @@
 
         .board {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, 1fr);
+            grid-template-columns: repeat(var(--grid-size), 1fr);
+            grid-template-rows: repeat(var(--grid-size), 1fr);
             gap: var(--board-gap);
             width: 100%;
             height: 100%;
@@ -212,6 +248,14 @@
             border: 1px solid rgba(255, 255, 255, 0.02);
             position: relative;
             outline: none;
+            font-size: 2.2rem;
+        }
+
+        .board-container[data-size="4"] .cell {
+            font-size: 1.8rem;
+        }
+        .board-container[data-size="5"] .cell {
+            font-size: 1.4rem;
         }
 
         .cell:hover:not(.occupied) {
@@ -224,44 +268,219 @@
             transform: translateY(1px);
         }
 
-        /* Estilização das Peças (X e O com SVG dinâmico) */
-        .cell svg {
-            width: 60%;
-            height: 60%;
-            stroke-dasharray: 100;
-            stroke-dashoffset: 100;
-            animation: draw 0.4s ease-out forwards;
+        /* Marcadores do jogo */
+        .cell-marker {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            animation: bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
-        @keyframes draw {
-            to {
-                stroke-dashoffset: 0;
-            }
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
         }
 
-        .cell.x-marker svg {
-            stroke: var(--color-x);
-            filter: drop-shadow(0 0 8px var(--color-x-glow));
-        }
-
-        .cell.o-marker svg {
-            stroke: var(--color-o);
-            filter: drop-shadow(0 0 8px var(--color-o-glow));
-        }
-
-        /* Destacar as células vencedoras */
         .cell.winner {
-            background-color: rgba(99, 102, 241, 0.15);
+            background-color: rgba(99, 102, 241, 0.25);
             border-color: var(--accent);
             animation: pulse-winner 1.5s infinite alternate;
         }
 
         @keyframes pulse-winner {
             0% { transform: scale(1); }
-            100% { transform: scale(1.03); box-shadow: 0 0 15px rgba(99, 102, 241, 0.3); }
+            100% { transform: scale(1.02); box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); }
         }
 
-        /* Rodapé com botões de ação */
+        /* Menu Modal de Configurações */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            padding: 20px;
+        }
+
+        .modal.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background-color: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 420px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal.open .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 12px;
+        }
+
+        .modal-header h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+
+        .modal-close:hover {
+            color: var(--text-main);
+        }
+
+        /* Configurações internas do Modal */
+        .config-section {
+            margin-bottom: 20px;
+        }
+
+        .config-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: block;
+            color: var(--text-muted);
+        }
+
+        /* Inputs de Texto */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .input-field {
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            padding: 10px 14px;
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        .input-field:focus {
+            border-color: var(--accent);
+        }
+
+        .input-field:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Seleção de Marcadores */
+        .markers-container {
+            display: flex;
+            gap: 16px;
+        }
+
+        .marker-select-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .marker-options {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .marker-opt {
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 1.3rem;
+            padding: 6px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .marker-opt:hover:not(.disabled) {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .marker-opt.selected {
+            border-color: var(--accent);
+            background-color: rgba(99, 102, 241, 0.15);
+        }
+
+        .marker-opt.disabled {
+            opacity: 0.25;
+            cursor: not-allowed;
+        }
+
+        /* Grid de Opções de Tema e Tamanho */
+        .pill-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .pill-btn {
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            flex: 1;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .pill-btn:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .pill-btn.active {
+            border-color: var(--accent);
+            background-color: var(--accent);
+            color: var(--text-main);
+        }
+
+        /* Rodapé de Ações do Jogo */
         .actions {
             width: 100%;
             display: flex;
@@ -344,17 +563,10 @@
         }
 
         .winner-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .winner-icon svg {
-            width: 100%;
-            height: 100%;
+            font-size: 4rem;
+            margin-bottom: 12px;
+            text-align: center;
+            display: block;
         }
 
         .winner-text {
@@ -377,13 +589,13 @@
         /* Responsividade para telas muito pequenas */
         @media (max-width: 400px) {
             header h1 {
-                font-size: 2rem;
+                font-size: 1.8rem;
             }
             .score-value {
-                font-size: 1.3rem;
+                font-size: 1.2rem;
             }
             .score-label {
-                font-size: 0.65rem;
+                font-size: 0.6rem;
             }
             .btn {
                 padding: 12px;
@@ -396,11 +608,19 @@
 
     <div class="container">
         <header>
-            <h1>Jogo da Velha</h1>
-            <p>Um clássico reinventado com estilo</p>
+            <div class="header-title">
+                <h1>Jogo da Velha</h1>
+                <p>Configurável e Moderno</p>
+            </div>
+            <button class="settings-trigger" id="settings-trigger-btn" aria-label="Abrir Configurações">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+            </button>
         </header>
 
-        <!-- Controles de Configuração -->
+        <!-- Controles de Modo de Jogo rápidos -->
         <section class="controls">
             <div class="mode-selection" aria-label="Seletor de Modo de Jogo">
                 <button class="mode-btn active" data-mode="ai">Contra a IA</button>
@@ -429,24 +649,16 @@
         </section>
 
         <!-- Arena do Jogo -->
-        <main class="board-container">
+        <main class="board-container" id="board-container" data-size="3">
             <div class="board" id="board" role="grid" aria-label="Tabuleiro do Jogo da Velha">
-                <div class="cell" data-index="0" role="button" tabindex="0" aria-label="Quadrante 1"></div>
-                <div class="cell" data-index="1" role="button" tabindex="0" aria-label="Quadrante 2"></div>
-                <div class="cell" data-index="2" role="button" tabindex="0" aria-label="Quadrante 3"></div>
-                <div class="cell" data-index="3" role="button" tabindex="0" aria-label="Quadrante 4"></div>
-                <div class="cell" data-index="4" role="button" tabindex="0" aria-label="Quadrante 5"></div>
-                <div class="cell" data-index="5" role="button" tabindex="0" aria-label="Quadrante 6"></div>
-                <div class="cell" data-index="6" role="button" tabindex="0" aria-label="Quadrante 7"></div>
-                <div class="cell" data-index="7" role="button" tabindex="0" aria-label="Quadrante 8"></div>
-                <div class="cell" data-index="8" role="button" tabindex="0" aria-label="Quadrante 9"></div>
+                <!-- Células geradas dinamicamente via Javascript -->
             </div>
 
             <!-- Overlay de Vitória/Empate -->
             <div class="game-overlay" id="game-overlay">
                 <div class="winner-announcement">
                     <div class="winner-icon" id="winner-icon-container"></div>
-                    <div class="winner-text" id="winner-text-msg">X Venceu!</div>
+                    <div class="winner-text" id="winner-text-msg">Jogador Venceu!</div>
                     <div class="winner-subtext" id="winner-subtext-msg">Excelente jogada na rodada.</div>
                     <button class="btn btn-primary btn-overlay" id="overlay-restart-btn">Jogar Novamente</button>
                 </div>
@@ -466,8 +678,70 @@
         </footer>
     </div>
 
+    <!-- Modal de Configurações -->
+    <div class="modal" id="settings-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Configurações</h2>
+                <button class="modal-close" id="settings-close-btn">&times;</button>
+            </div>
+            
+            <!-- Configuração de Nomes -->
+            <div class="config-section">
+                <span class="config-label">Nomes dos Jogadores</span>
+                <div class="input-group">
+                    <input type="text" class="input-field" id="name-input-x" placeholder="Jogador 1 (Inicia com X)" maxlength="12">
+                    <input type="text" class="input-field" id="name-input-o" placeholder="Jogador 2 (O)" maxlength="12">
+                </div>
+            </div>
+
+            <!-- Configuração de Marcadores -->
+            <div class="config-section">
+                <span class="config-label">Selecione os Marcadores</span>
+                <div class="markers-container">
+                    <div class="marker-select-box">
+                        <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Jogador 1</span>
+                        <div class="marker-options" id="options-p1">
+                            <!-- Injetado dinamicamente -->
+                        </div>
+                    </div>
+                    <div class="marker-select-box">
+                        <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Jogador 2 / IA</span>
+                        <div class="marker-options" id="options-p2">
+                            <!-- Injetado dinamicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuração de Tamanho do Tabuleiro -->
+            <div class="config-section">
+                <span class="config-label">Tamanho do Tabuleiro</span>
+                <div class="pill-grid" id="board-size-options">
+                    <button class="pill-btn active" data-size="3">3x3</button>
+                    <button class="pill-btn" data-size="4">4x4</button>
+                    <button class="pill-btn" data-size="5">5x5</button>
+                </div>
+            </div>
+
+            <!-- Configuração de Tema -->
+            <div class="config-section">
+                <span class="config-label">Tema Visual</span>
+                <div class="pill-grid" id="theme-options">
+                    <button class="pill-btn active" data-theme="dark">Escuro</button>
+                    <button class="pill-btn" data-theme="light">Claro</button>
+                    <button class="pill-btn" data-theme="cyberpunk">Cyberpunk</button>
+                    <button class="pill-btn" data-theme="emerald">Esmeralda</button>
+                    <button class="pill-btn" data-theme="sunset">Pôr do Sol</button>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" id="save-settings-btn" style="width: 100%; margin-top: 10px;">Aplicar Alterações</button>
+        </div>
+    </div>
+
     <script>
-        // --- SINTETIZADOR DE ÁUDIO (Web Audio API para efeitos sonoros) ---
+        // --- SINTETIZADOR DE ÁUDIO (Web Audio API) ---
         const Sound = {
             ctx: null,
             init() {
@@ -480,9 +754,9 @@
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(440, this.ctx.currentTime); // nota Lá
+                osc.frequency.setValueAtTime(440, this.ctx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.08);
-                gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.04, this.ctx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
@@ -494,9 +768,9 @@
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(330, this.ctx.currentTime); // nota Mi
+                osc.frequency.setValueAtTime(330, this.ctx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(660, this.ctx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.04, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.03, this.ctx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
@@ -505,13 +779,13 @@
             },
             playWin() {
                 this.init();
-                const notes = [523.25, 659.25, 783.99, 1046.50]; // Acorde C maior (Dó, Mi, Sol, Dó)
+                const notes = [523.25, 659.25, 783.99, 1046.50];
                 notes.forEach((freq, index) => {
                     const osc = this.ctx.createOscillator();
                     const gain = this.ctx.createGain();
                     osc.type = 'triangle';
                     osc.frequency.setValueAtTime(freq, this.ctx.currentTime + (index * 0.1));
-                    gain.gain.setValueAtTime(0.05, this.ctx.currentTime + (index * 0.1));
+                    gain.gain.setValueAtTime(0.04, this.ctx.currentTime + (index * 0.1));
                     gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + (index * 0.1) + 0.3);
                     osc.connect(gain);
                     gain.connect(this.ctx.destination);
@@ -526,7 +800,7 @@
                 osc.type = 'sawtooth';
                 osc.frequency.setValueAtTime(220, this.ctx.currentTime);
                 osc.frequency.linearRampToValueAtTime(150, this.ctx.currentTime + 0.25);
-                gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.04, this.ctx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
@@ -535,34 +809,146 @@
             }
         };
 
+        // --- SISTEMA DE TEMAS ---
+        const Themes = {
+            activeTheme: 'dark',
+            colors: {
+                dark: {
+                    '--bg-primary': '#0f172a',
+                    '--bg-secondary': '#1e293b',
+                    '--text-main': '#f8fafc',
+                    '--text-muted': '#94a3b8',
+                    '--accent': '#6366f1',
+                    '--color-x': '#3b82f6',
+                    '--color-o': '#10b981',
+                    '--color-x-glow': 'rgba(59, 130, 246, 0.4)',
+                    '--color-o-glow': 'rgba(16, 185, 129, 0.4)'
+                },
+                light: {
+                    '--bg-primary': '#f1f5f9',
+                    '--bg-secondary': '#ffffff',
+                    '--text-main': '#0f172a',
+                    '--text-muted': '#475569',
+                    '--accent': '#4f46e5',
+                    '--color-x': '#2563eb',
+                    '--color-o': '#059669',
+                    '--color-x-glow': 'rgba(37, 99, 235, 0.2)',
+                    '--color-o-glow': 'rgba(5, 150, 105, 0.2)'
+                },
+                cyberpunk: {
+                    '--bg-primary': '#12041d',
+                    '--bg-secondary': '#220935',
+                    '--text-main': '#00f0ff',
+                    '--text-muted': '#ff007f',
+                    '--accent': '#bc13fe',
+                    '--color-x': '#00f0ff',
+                    '--color-o': '#ff007f',
+                    '--color-x-glow': 'rgba(0, 240, 255, 0.5)',
+                    '--color-o-glow': 'rgba(255, 0, 127, 0.5)'
+                },
+                emerald: {
+                    '--bg-primary': '#022c22',
+                    '--bg-secondary': '#064e3b',
+                    '--text-main': '#f0fdf4',
+                    '--text-muted': '#a7f3d0',
+                    '--accent': '#10b981',
+                    '--color-x': '#fbbf24',
+                    '--color-o': '#10b981',
+                    '--color-x-glow': 'rgba(251, 191, 36, 0.4)',
+                    '--color-o-glow': 'rgba(16, 185, 129, 0.4)'
+                },
+                sunset: {
+                    '--bg-primary': '#1c1917',
+                    '--bg-secondary': '#292524',
+                    '--text-main': '#fafaf9',
+                    '--text-muted': '#f43f5e',
+                    '--accent': '#f97316',
+                    '--color-x': '#f43f5e',
+                    '--color-o': '#f97316',
+                    '--color-x-glow': 'rgba(244, 63, 94, 0.4)',
+                    '--color-o-glow': 'rgba(249, 115, 22, 0.4)'
+                }
+            },
+            apply(theme) {
+                this.activeTheme = theme;
+                const variables = this.colors[theme];
+                for (const key in variables) {
+                    document.documentElement.style.setProperty(key, variables[key]);
+                }
+            }
+        };
+
         // --- MODELAGEM E ESTADO DO JOGO ---
         const Game = {
-            board: Array(9).fill(null),
-            currentPlayer: 'X', // 'X' começa por padrão
+            boardSize: 3,
+            board: [],
+            currentPlayer: 'X',
             isGameActive: true,
             gameMode: 'ai', // 'ai' ou 'pvp'
             difficulty: 'impossible', // 'easy' ou 'impossible'
             scores: { X: 0, O: 0, draws: 0 },
-            winningConditions: [
-                [0, 1, 2], [3, 4, 5], [6, 7, 8], // Linhas
-                [0, 3, 6], [1, 4, 7], [2, 5, 8], // Colunas
-                [0, 4, 8], [2, 4, 6]             // Diagonais
-            ],
+            
+            // Definição dos nomes e marcadores customizados
+            names: { X: 'Jogador 1', O: 'IA' },
+            markers: { X: '❌', O: '⭕' },
+            markerList: ['❌', '⭕', '⭐', '❤️', '🔥', '💧', '⚡', '👑'],
 
-            // Reseta a rodada mantendo o placar
+            winningConditions: [],
+
+            init() {
+                this.generateWinningConditions();
+                this.resetRound();
+            },
+
+            // Cria dinamicamente as combinações vencedoras com base no tamanho do tabuleiro
+            generateWinningConditions() {
+                const size = this.boardSize;
+                this.winningConditions = [];
+
+                // Linhas
+                for (let i = 0; i < size; i++) {
+                    const row = [];
+                    for (let j = 0; j < size; j++) {
+                        row.push(i * size + j);
+                    }
+                    this.winningConditions.push(row);
+                }
+
+                // Colunas
+                for (let i = 0; i < size; i++) {
+                    const col = [];
+                    for (let j = 0; j < size; j++) {
+                        col.push(i + j * size);
+                    }
+                    this.winningConditions.push(col);
+                }
+
+                // Diagonal principal
+                const diag1 = [];
+                for (let i = 0; i < size; i++) {
+                    diag1.push(i * size + i);
+                }
+                this.winningConditions.push(diag1);
+
+                // Diagonal secundária
+                const diag2 = [];
+                for (let i = 0; i < size; i++) {
+                    diag2.push(i * size + (size - 1 - i));
+                }
+                this.winningConditions.push(diag2);
+            },
+
             resetRound() {
-                this.board = Array(9).fill(null);
+                this.board = Array(this.boardSize * this.boardSize).fill(null);
                 this.currentPlayer = 'X';
                 this.isGameActive = true;
             },
 
-            // Reseta toda a pontuação e inicia nova rodada
             resetScores() {
                 this.scores = { X: 0, O: 0, draws: 0 };
                 this.resetRound();
             },
 
-            // Faz a jogada lógico-métrica
             makeMove(index, player) {
                 if (this.board[index] === null && this.isGameActive) {
                     this.board[index] = player;
@@ -571,17 +957,20 @@
                 return false;
             },
 
-            // Troca o turno do jogador
             switchPlayer() {
                 this.currentPlayer = this.currentPlayer === 'X' ? 'O' : 'X';
             },
 
-            // Checa se há um vencedor
             checkWinner() {
+                const size = this.boardSize;
                 for (let i = 0; i < this.winningConditions.length; i++) {
-                    const [a, b, c] = this.winningConditions[i];
-                    if (this.board[a] && this.board[a] === this.board[b] && this.board[a] === this.board[c]) {
-                        return { winner: this.board[a], combination: [a, b, c] };
+                    const condition = this.winningConditions[i];
+                    const firstVal = this.board[condition[0]];
+                    if (firstVal) {
+                        const isWin = condition.every(index => this.board[index] === firstVal);
+                        if (isWin) {
+                            return { winner: firstVal, combination: condition };
+                        }
                     }
                 }
                 if (!this.board.includes(null)) {
@@ -590,31 +979,33 @@
                 return null;
             },
 
-            // --- INTELIGÊNCIA ARTIFICIAL (Minimax) ---
+            // --- INTELIGÊNCIA ARTIFICIAL (Otimizada) ---
             getBestMove() {
                 if (this.difficulty === 'easy') {
-                    // Jogadas aleatórias no nível fácil
                     const availableMoves = this.board.map((val, idx) => val === null ? idx : null).filter(val => val !== null);
                     return availableMoves[Math.floor(Math.random() * availableMoves.length)];
                 }
 
-                // Lógica de Minimax para o nível impossível
-                let bestScore = -Infinity;
-                let move = null;
-
-                for (let i = 0; i < 9; i++) {
-                    if (this.board[i] === null) {
-                        this.board[i] = 'O'; // IA simula jogada dela
-                        let score = this.minimax(this.board, 0, false);
-                        this.board[i] = null; // desfaz simulação
-
-                        if (score > bestScore) {
-                            bestScore = score;
-                            move = i;
+                // Usar Minimax clássico apenas para tabuleiros 3x3 para evitar travamento da CPU
+                if (this.boardSize === 3) {
+                    let bestScore = -Infinity;
+                    let move = null;
+                    for (let i = 0; i < 9; i++) {
+                        if (this.board[i] === null) {
+                            this.board[i] = 'O';
+                            let score = this.minimax(this.board, 0, false);
+                            this.board[i] = null;
+                            if (score > bestScore) {
+                                bestScore = score;
+                                move = i;
+                            }
                         }
                     }
+                    return move;
+                } else {
+                    // Para 4x4 e 5x5: Usar Algoritmo Heurístico Avançado de Decisão Ultrarápido
+                    return this.getSmartHeuristicMove();
                 }
-                return move;
             },
 
             minimax(board, depth, isMaximizing) {
@@ -648,13 +1039,66 @@
                     }
                     return bestScore;
                 }
+            },
+
+            // Heurística rápida e extremamente inteligente para 4x4 e 5x5
+            getSmartHeuristicMove() {
+                const size = this.boardSize;
+                
+                // 1. Tentar ganhar imediatamente neste turno
+                for (let i = 0; i < this.winningConditions.length; i++) {
+                    const line = this.winningConditions[i];
+                    const countO = line.filter(idx => this.board[idx] === 'O').length;
+                    const countEmpty = line.filter(idx => this.board[idx] === null).length;
+                    if (countO === size - 1 && countEmpty === 1) {
+                        return line.find(idx => this.board[idx] === null);
+                    }
+                }
+
+                // 2. Bloquear o oponente de ganhar
+                for (let i = 0; i < this.winningConditions.length; i++) {
+                    const line = this.winningConditions[i];
+                    const countX = line.filter(idx => this.board[idx] === 'X').length;
+                    const countEmpty = line.filter(idx => this.board[idx] === null).length;
+                    if (countX === size - 1 && countEmpty === 1) {
+                        return line.find(idx => this.board[idx] === null);
+                    }
+                }
+
+                // 3. Bloquear construções perigosas de nível 2 (se faltar 2 para oponente ganhar)
+                if (size > 3) {
+                    for (let i = 0; i < this.winningConditions.length; i++) {
+                        const line = this.winningConditions[i];
+                        const countX = line.filter(idx => this.board[idx] === 'X').length;
+                        const countEmpty = line.filter(idx => this.board[idx] === null).length;
+                        if (countX === size - 2 && countEmpty === 2) {
+                            return line.find(idx => this.board[idx] === null);
+                        }
+                    }
+                }
+
+                // 4. Se o centro estiver livre, dominar o centro
+                const centerIdx = Math.floor((size * size) / 2);
+                if (this.board[centerIdx] === null) return centerIdx;
+
+                // 5. Escolher cantos prioritários livres
+                const corners = [0, size - 1, size * (size - 1), (size * size) - 1];
+                const freeCorners = corners.filter(idx => this.board[idx] === null);
+                if (freeCorners.length > 0) {
+                    return freeCorners[Math.floor(Math.random() * freeCorners.length)];
+                }
+
+                // 6. Fallback final: qualquer espaço vazio randômico
+                const availableMoves = this.board.map((val, idx) => val === null ? idx : null).filter(val => val !== null);
+                return availableMoves[Math.floor(Math.random() * availableMoves.length)];
             }
         };
 
         // --- MANIPULAÇÃO DA INTERFACE (UI) ---
         const UI = {
-            cells: document.querySelectorAll('.cell'),
+            cells: [],
             board: document.getElementById('board'),
+            boardContainer: document.getElementById('board-container'),
             scoreX: document.getElementById('score-x'),
             scoreO: document.getElementById('score-o'),
             scoreDraws: document.getElementById('score-draws'),
@@ -662,9 +1106,27 @@
             scoreOBox: document.getElementById('score-o-box'),
             labelX: document.getElementById('label-x'),
             labelO: document.getElementById('label-o'),
+            
+            // Controles de Modo & Dificuldade
             modeBtns: document.querySelectorAll('.mode-btn'),
             diffBtns: document.querySelectorAll('.diff-btn'),
             diffSection: document.querySelector('.difficulty-selection'),
+            
+            // Botões e Modais de Configuração
+            settingsTrigger: document.getElementById('settings-trigger-btn'),
+            settingsModal: document.getElementById('settings-modal'),
+            settingsClose: document.getElementById('settings-close-btn'),
+            saveSettingsBtn: document.getElementById('save-settings-btn'),
+            
+            // Elementos de Configuração do Modal
+            nameInputX: document.getElementById('name-input-x'),
+            nameInputO: document.getElementById('name-input-o'),
+            optionsP1Container: document.getElementById('options-p1'),
+            optionsP2Container: document.getElementById('options-p2'),
+            boardSizeOptions: document.getElementById('board-size-options'),
+            themeOptions: document.getElementById('theme-options'),
+
+            // Controle de jogo
             restartBtn: document.getElementById('restart-game-btn'),
             resetScoresBtn: document.getElementById('reset-scores-btn'),
             overlay: document.getElementById('game-overlay'),
@@ -673,25 +1135,26 @@
             winnerMsg: document.getElementById('winner-text-msg'),
             winnerSubmsg: document.getElementById('winner-subtext-msg'),
 
+            // Variáveis temporárias de configuração
+            tempP1Marker: '❌',
+            tempP2Marker: '⭕',
+            tempBoardSize: 3,
+            tempTheme: 'dark',
+
             init() {
+                Game.init();
                 this.bindEvents();
+                this.updateThemeActivePills();
+                this.updateBoardSizeActivePills();
+                this.buildMarkerSelection();
+                this.loadConfigToForm();
+                this.rebuildGameBoard();
                 this.updateLabels();
                 this.render();
             },
 
             bindEvents() {
-                // Evento de cliques em células
-                this.cells.forEach(cell => {
-                    cell.addEventListener('click', (e) => this.handleCellClick(e));
-                    cell.addEventListener('keydown', (e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            this.handleCellClick(e);
-                        }
-                    });
-                });
-
-                // Seleção de Modo
+                // Seleção de Modo rápido na página
                 this.modeBtns.forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         this.changeMode(e.target.dataset.mode);
@@ -699,7 +1162,7 @@
                     });
                 });
 
-                // Seleção de Dificuldade
+                // Seleção de Dificuldade rápida na página
                 this.diffBtns.forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         this.changeDifficulty(e.target.dataset.diff);
@@ -707,29 +1170,195 @@
                     });
                 });
 
-                // Reiniciar e Zerar
+                // Abrir / Fechar Modal de Configuração
+                this.settingsTrigger.addEventListener('click', () => {
+                    this.loadConfigToForm();
+                    this.settingsModal.classList.add('open');
+                    Sound.playClick();
+                });
+
+                this.settingsClose.addEventListener('click', () => {
+                    this.settingsModal.classList.remove('open');
+                    Sound.playClick();
+                });
+
+                // Mudar tamanho do tabuleiro no modal
+                this.boardSizeOptions.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.pill-btn');
+                    if (btn) {
+                        this.tempBoardSize = parseInt(btn.dataset.size);
+                        this.updateBoardSizeActivePills();
+                        Sound.playClick();
+                    }
+                });
+
+                // Mudar tema no modal
+                this.themeOptions.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.pill-btn');
+                    if (btn) {
+                        this.tempTheme = btn.dataset.theme;
+                        this.updateThemeActivePills();
+                        Themes.apply(this.tempTheme);
+                        Sound.playClick();
+                    }
+                });
+
+                // Aplicar / Salvar Configurações do modal
+                this.saveSettingsBtn.addEventListener('click', () => {
+                    this.applyConfig();
+                    this.settingsModal.classList.remove('open');
+                    Sound.playClick();
+                });
+
+                // Ações de jogo
                 this.restartBtn.addEventListener('click', () => {
                     this.restartRound();
                     Sound.playClick();
                 });
+
                 this.resetScoresBtn.addEventListener('click', () => {
                     this.resetAll();
                     Sound.playClick();
                 });
+
                 this.overlayRestartBtn.addEventListener('click', () => {
                     this.restartRound();
                     Sound.playClick();
                 });
             },
 
+            // Cria dinamicamente o tabuleiro no HTML com base no tamanho configurado
+            rebuildGameBoard() {
+                this.board.innerHTML = '';
+                document.documentElement.style.setProperty('--grid-size', Game.boardSize);
+                this.boardContainer.setAttribute('data-size', Game.boardSize);
+                
+                const totalCells = Game.boardSize * Game.boardSize;
+                this.cells = [];
+
+                for (let i = 0; i < totalCells; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.setAttribute('data-index', i);
+                    cell.setAttribute('role', 'button');
+                    cell.setAttribute('tabindex', '0');
+                    cell.setAttribute('aria-label', `Quadrante ${i + 1}`);
+                    
+                    cell.addEventListener('click', (e) => this.handleCellClick(e));
+                    cell.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            this.handleCellClick(e);
+                        }
+                    });
+
+                    this.board.appendChild(cell);
+                    this.cells.push(cell);
+                }
+            },
+
+            // Carrega as configurações correntes para as opções do modal
+            loadConfigToForm() {
+                this.tempP1Marker = Game.markers.X;
+                this.tempP2Marker = Game.markers.O;
+                this.tempBoardSize = Game.boardSize;
+                this.tempTheme = Themes.activeTheme;
+
+                this.nameInputX.value = Game.names.X;
+                this.nameInputO.value = Game.gameMode === 'ai' ? 'IA' : Game.names.O;
+                this.nameInputO.disabled = Game.gameMode === 'ai';
+
+                this.updateThemeActivePills();
+                this.updateBoardSizeActivePills();
+                this.updateMarkerSelections();
+            },
+
+            // Atualiza os marcadores disponíveis na tela garantindo exclusividade
+            buildMarkerSelection() {
+                const makeGrid = (container, playerKey) => {
+                    container.innerHTML = '';
+                    Game.markerList.forEach(marker => {
+                        const opt = document.createElement('button');
+                        opt.className = 'marker-opt';
+                        opt.textContent = marker;
+                        opt.dataset.marker = marker;
+                        opt.addEventListener('click', () => this.selectMarker(playerKey, marker));
+                        container.appendChild(opt);
+                    });
+                };
+
+                makeGrid(this.optionsP1Container, 'X');
+                makeGrid(this.optionsP2Container, 'O');
+            },
+
+            selectMarker(playerKey, marker) {
+                if (playerKey === 'X') {
+                    if (this.tempP2Marker === marker) return; // Não permitir duplicado
+                    this.tempP1Marker = marker;
+                } else {
+                    if (this.tempP1Marker === marker) return; // Não permitir duplicado
+                    this.tempP2Marker = marker;
+                }
+                Sound.playClick();
+                this.updateMarkerSelections();
+            },
+
+            updateMarkerSelections() {
+                // Atualizar player 1
+                this.optionsP1Container.querySelectorAll('.marker-opt').forEach(btn => {
+                    btn.classList.toggle('selected', btn.dataset.marker === this.tempP1Marker);
+                    btn.classList.toggle('disabled', btn.dataset.marker === this.tempP2Marker);
+                });
+                // Atualizar player 2
+                this.optionsP2Container.querySelectorAll('.marker-opt').forEach(btn => {
+                    btn.classList.toggle('selected', btn.dataset.marker === this.tempP2Marker);
+                    btn.classList.toggle('disabled', btn.dataset.marker === this.tempP1Marker);
+                });
+            },
+
+            updateThemeActivePills() {
+                this.themeOptions.querySelectorAll('.pill-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.theme === this.tempTheme);
+                });
+            },
+
+            updateBoardSizeActivePills() {
+                this.boardSizeOptions.querySelectorAll('.pill-btn').forEach(btn => {
+                    btn.classList.toggle('active', parseInt(btn.dataset.size) === this.tempBoardSize);
+                });
+            },
+
+            // Salva todas as configurações alteradas
+            applyConfig() {
+                // Salvar nomes com fallback de texto limpo
+                Game.names.X = this.nameInputX.value.trim() || 'Jogador 1';
+                if (Game.gameMode !== 'ai') {
+                    Game.names.O = this.nameInputO.value.trim() || 'Jogador 2';
+                } else {
+                    Game.names.O = 'IA';
+                }
+
+                // Salvar marcadores
+                Game.markers.X = this.tempP1Marker;
+                Game.markers.O = this.tempP2Marker;
+
+                // Salvar tamanho do tabuleiro
+                if (Game.boardSize !== this.tempBoardSize) {
+                    Game.boardSize = this.tempBoardSize;
+                    Game.generateWinningConditions();
+                    this.rebuildGameBoard();
+                }
+
+                Themes.apply(this.tempTheme);
+                this.updateLabels();
+                this.resetAll();
+            },
+
             handleCellClick(e) {
                 const cell = e.currentTarget;
                 const index = parseInt(cell.dataset.index);
 
-                // Bloquear jogada se a IA estiver pensando ou se a célula já está ocupada
                 if (!Game.isGameActive || Game.board[index] !== null) return;
-                
-                // Bloqueia clique se for a vez do O e o modo for IA
                 if (Game.gameMode === 'ai' && Game.currentPlayer === 'O') return;
 
                 this.executePlay(index);
@@ -738,7 +1367,6 @@
             executePlay(index) {
                 const activePlayer = Game.currentPlayer;
                 if (Game.makeMove(index, activePlayer)) {
-                    // Tocar som de jogada
                     if (activePlayer === 'X') {
                         Sound.playClick();
                     } else {
@@ -752,9 +1380,8 @@
                         Game.switchPlayer();
                         this.updateActiveTurn();
 
-                        // Se o modo for IA e agora for a vez dela
                         if (Game.gameMode === 'ai' && Game.currentPlayer === 'O') {
-                            setTimeout(() => this.executeAIMove(), 500); // delay leve para sensação humana
+                            setTimeout(() => this.executeAIMove(), 500);
                         }
                     }
                 }
@@ -768,27 +1395,14 @@
                 }
             },
 
-            // Desenha a peça graficamente usando SVG dinâmico
             renderCell(index, player) {
                 const cell = this.cells[index];
-                cell.classList.add('occupied', player === 'X' ? 'x-marker' : 'o-marker');
+                cell.classList.add('occupied');
                 
-                let svgContent = '';
-                if (player === 'X') {
-                    svgContent = `
-                        <svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round">
-                            <line x1="4" y1="4" x2="20" y2="20"></line>
-                            <line x1="20" y1="4" x2="4" y2="20"></line>
-                        </svg>
-                    `;
-                } else {
-                    svgContent = `
-                        <svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round">
-                            <circle cx="12" cy="12" r="9"></circle>
-                        </svg>
-                    `;
-                }
-                cell.innerHTML = svgContent;
+                const markerContainer = document.createElement('span');
+                markerContainer.className = 'cell-marker';
+                markerContainer.textContent = Game.markers[player];
+                cell.appendChild(markerContainer);
             },
 
             checkGameState() {
@@ -802,7 +1416,6 @@
                         Sound.playDraw();
                     } else {
                         Game.scores[state.winner]++;
-                        // Marcar visualmente os vencedores
                         state.combination.forEach(idx => {
                             this.cells[idx].classList.add('winner');
                         });
@@ -830,13 +1443,12 @@
             },
 
             updateLabels() {
+                this.labelX.textContent = `${Game.names.X} (${Game.markers.X})`;
+                this.labelO.textContent = `${Game.names.O} (${Game.markers.O})`;
+                
                 if (Game.gameMode === 'ai') {
-                    this.labelX.textContent = "Jogador (X)";
-                    this.labelO.textContent = "IA (O)";
                     this.diffSection.classList.remove('hidden');
                 } else {
-                    this.labelX.textContent = "Jogador 1 (X)";
-                    this.labelO.textContent = "Jogador 2 (O)";
                     this.diffSection.classList.add('hidden');
                 }
             },
@@ -864,47 +1476,29 @@
 
             showOverlay(winner) {
                 setTimeout(() => {
-                    let iconHtml = '';
                     if (winner === 'X') {
-                        iconHtml = `
-                            <svg class="winner-x" viewBox="0 0 24 24" fill="none" stroke="var(--color-x)" stroke-width="3" stroke-linecap="round">
-                                <line x1="4" y1="4" x2="20" y2="20"></line>
-                                <line x1="20" y1="4" x2="4" y2="20"></line>
-                            </svg>`;
-                        this.winnerMsg.textContent = Game.gameMode === 'ai' ? "Você Venceu!" : "Jogador 1 Venceu!";
-                        this.winnerSubtext(winner);
+                        this.winnerIconContainer.textContent = Game.markers.X;
+                        this.winnerMsg.textContent = `${Game.names.X} Venceu!`;
+                        this.winnerSubmsg.textContent = "Excelente rodada e jogadas estratégicas!";
                     } else if (winner === 'O') {
-                        iconHtml = `
-                            <svg class="winner-o" viewBox="0 0 24 24" fill="none" stroke="var(--color-o)" stroke-width="3" stroke-linecap="round">
-                                <circle cx="12" cy="12" r="9"></circle>
-                            </svg>`;
-                        this.winnerMsg.textContent = Game.gameMode === 'ai' ? "A IA Venceu!" : "Jogador 2 Venceu!";
+                        this.winnerIconContainer.textContent = Game.markers.O;
+                        this.winnerMsg.textContent = `${Game.names.O} Venceu!`;
                         this.winnerSubtext(winner);
                     } else {
-                        iconHtml = `
-                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                <line x1="9" y1="9" x2="15" y2="15"></line>
-                                <line x1="15" y1="9" x2="9" y2="15"></line>
-                            </svg>`;
+                        this.winnerIconContainer.textContent = "🤝";
                         this.winnerMsg.textContent = "Empate!";
-                        this.winnerSubtext(winner);
+                        this.winnerSubmsg.textContent = "Equilíbrio tático perfeito nesta rodada.";
                     }
 
-                    this.winnerIconContainer.innerHTML = iconHtml;
                     this.overlay.classList.add('show');
                 }, 600);
             },
 
             winnerSubtext(winner) {
-                if (winner === 'Draw') {
-                    this.winnerSubtextMsg.textContent = "Excelente disputa estratégica de ambos!";
-                } else if (Game.gameMode === 'ai') {
-                    this.winnerSubtextMsg.textContent = winner === 'X' ? 
-                        "Incrível, você superou nosso algoritmo!" : 
-                        "Não se preocupe, o algoritmo Minimax foi treinado para ser perfeito.";
+                if (Game.gameMode === 'ai') {
+                    this.winnerSubmsg.textContent = "Não desanime. Nosso algoritmo é treinado estrategicamente!";
                 } else {
-                    this.winnerSubtextMsg.textContent = "Uma bela vitória estratégica!";
+                    this.winnerSubmsg.textContent = "Vitória magnífica do Jogador 2!";
                 }
             },
 
@@ -921,7 +1515,6 @@
                 this.render();
             },
 
-            // Renderiza o tabuleiro completo do zero
             render() {
                 this.cells.forEach(cell => {
                     cell.className = 'cell';
@@ -931,7 +1524,7 @@
             }
         };
 
-        // Inicia o app ao carregar o DOM
+        // Iniciar
         document.addEventListener('DOMContentLoaded', () => {
             UI.init();
         });
